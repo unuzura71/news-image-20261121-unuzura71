@@ -10,7 +10,7 @@
 // The output directory is /output on the grader. Elsewhere, set MAKEFUN_OUTPUT_DIR:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const picture = new URL('./entry.png', import.meta.url);
@@ -20,4 +20,11 @@ const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 // it first instead of letting the copy fail on a missing folder.
 mkdirSync(outDir, { recursive: true });
 
-copyFileSync(picture, join(outDir, 'entry.png'));
+const target = join(outDir, 'entry.png');
+copyFileSync(picture, target);
+
+// The grader runs the program twice and compares the bytes: fail loudly here
+// instead of handing in a truncated copy.
+if (statSync(target).size !== statSync(picture).size) {
+  throw new Error('copied entry.png does not match the source');
+}
